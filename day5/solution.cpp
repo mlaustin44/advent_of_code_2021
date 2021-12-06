@@ -4,14 +4,6 @@
 
 using namespace std;
 
-
-
-class Floor {
-    vector<vector<int>> floorMap;
-    public:
-
-};
-
 class Line {
     public:
         int x1;
@@ -37,6 +29,67 @@ Line::Line(string in) {
     y2 = stoi(sub2.substr(comma2+1));
 }
 
+class Floor {
+    vector<vector<int>> floorMap;
+    public:
+        Floor(vector<Line> inLines);
+        int getOverlaps();
+};
+
+Floor::Floor(vector<Line> inLines) {
+    // find the max x and y
+    int xmax = 0;
+    int ymax = 0;
+    for (Line l : inLines) {
+        int localXmax = (l.x1 > l.x2) ? l.x1 : l.x2;
+        int localYmax = (l.y1 > l.y2) ? l.y1 : l.y2;
+        if (localXmax > xmax) { xmax = localXmax; }
+        if (localYmax > ymax) { ymax = localYmax; }
+    }
+    // make the 2d array, fill it with zeros
+    floorMap = vector<vector<int>> (ymax+1,
+        vector<int> (xmax+1, 0));
+
+    // loop through again.  anywhere the line touches add 1
+    for (Line l : inLines) {
+        // get the 
+        // horizontal line ascending (y1 < y2)
+        if (l.x1 == l.x2 && l.y1 < l.y2) {
+            for (int i=l.y1; i<(l.y2 + 1); i++) {
+                floorMap[i][l.x1] += 1;
+            }
+        // vertical line descending (y1 > y2)
+        } else if (l.x1 == l.x2 && l.y1 > l.y2) {
+            for (int i=l.y2; i<(l.y1 + 1); i++) {
+                floorMap[i][l.x1] += 1;
+            }
+        // horizontal line ascending (x1 < x2)
+        } else if (l.y1 == l.y2 && l.x1 < l.x2) {
+            for (int i=l.x1; i<(l.x2 + 1); i++) {
+                floorMap[l.y1][i] += 1;
+            }
+        // horizontal line descending (x1 > x2)
+        } else if (l.y1 == l.y2 && l.x1 > l.x2) {
+            for (int i=l.x2; i<(l.x1 + 1); i++) {
+                floorMap[l.y1][i] += 1;
+            }
+        // diagonal line case
+        } else {
+            if (l.x1 > l.x2) {}
+        }
+    }
+}
+
+int Floor::getOverlaps() {
+    int nOverlaps = 0;
+    for (int i=0; i<floorMap.size(); i++) {
+        for (int j=0; j<floorMap[0].size(); j++) {
+            if (floorMap[i][j] > 1) { nOverlaps++; }
+        }
+    }
+    return nOverlaps;
+}
+
 int main(int argc, char *argv[]) {
     string fname = argv[1];
     fstream infile = fstream(fname);
@@ -52,5 +105,7 @@ int main(int argc, char *argv[]) {
     for (auto l : inputLines) {
         lines.push_back(Line(l));
     }
-    cout << "blah\n";
+    Floor floor = Floor(lines);
+    int overlaps = floor.getOverlaps();
+    cout << "Number of overlaps: " << overlaps << "\n";
 }
