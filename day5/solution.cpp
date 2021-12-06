@@ -75,7 +75,34 @@ Floor::Floor(vector<Line> inLines) {
             }
         // diagonal line case
         } else {
-            if (l.x1 > l.x2) {}
+            //0=+ direction, 1=-dir
+            int xDir = (l.x2 > l.x1) ? 0 : 1;
+            int yDir = (l.y2 > l.y1) ? 0 : 1;
+            // case 1 - +x, +y
+            if (xDir == 0 && yDir == 0) {
+                int mag = l.x2 - l.x1 + 1;
+                for (int i=0; i<mag; i++) {
+                    floorMap[l.y1 + i][l.x1 + i] += 1;
+                } 
+            // case 2 = -x, +y
+            } else if (xDir == 1 && yDir == 0) {
+                int mag = l.x1 - l.x2 + 1;
+                for (int i=0; i<mag; i++) {
+                    floorMap[l.y1 + i][l.x1 - i] += 1;
+                } 
+            // case 3 = +x, -y
+            } else if (xDir == 0 && yDir == 1) {
+                int mag = l.x2 - l.x1 + 1;
+                for (int i=0; i<mag; i++) {
+                    floorMap[l.y1 - i][l.x1 + i] += 1;
+                } 
+            // case 4 = -x, -y
+            } else if (xDir == 1 && yDir == 1) {
+                int mag = l.x1 - l.x2 + 1;
+                for (int i=0; i<mag; i++) {
+                    floorMap[l.y1 - i][l.x1 - i] += 1;
+                } 
+            }
         }
     }
 }
