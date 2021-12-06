@@ -22,10 +22,10 @@ vector<int> getStateDay(vector<int> startState, int day) {
     return state;
 }
 
-// smart approach for part 2
+// smart approach for part 2 (works for part 1 too, of course)
 long long getFishOnDay(vector<int> startState, int day) {
     // define a vector with one element for each fish age
-    vector<long long> state(9,0);
+    vector<long> state(9,0);
     //account for the original fish
     for (int f : startState) {
         state[f] += 1;
@@ -33,7 +33,7 @@ long long getFishOnDay(vector<int> startState, int day) {
 
     for (int i=0; i<day; i++) {
         // find the number of fish that need to spawn
-        long long spawningFish = state[0];
+        long spawningFish = state[0];
         // slide the rest of the fish down.  
         //      could do this in a loop but there's only 9 operations and 2 are special cases
         state[0] = state[1];
@@ -42,9 +42,9 @@ long long getFishOnDay(vector<int> startState, int day) {
         state[3] = state[4];
         state[4] = state[5];
         state[5] = state[6];
-        state[6] = state[7] + spawningFish;
+        state[6] = state[7] + spawningFish; // fish that spawned reset to state 6
         state[7] = state[8];
-        state[8] = spawningFish;
+        state[8] = spawningFish;    //newly spawned fish start on state 8
     }
 
     // calculate the sum of fish
