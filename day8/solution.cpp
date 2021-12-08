@@ -10,6 +10,10 @@
 8   abcdefg 7*
 9   acbdfg  6
 
+by nSegments:
+5   2,3,5
+6   0,6,9
+
 Part 1 - need to find number of 1,4,7,8 that appear
     each of those has a unique number of segments, so
     we can just ignore the input and find the number
@@ -19,6 +23,8 @@ Part 1 - need to find number of 1,4,7,8 that appear
 #include <fstream>
 #include <vector>
 #include <string>
+#include <map>
+#include <algorithm>
 
 using namespace std;
 
@@ -64,6 +70,22 @@ Input parseInput(string line) {
     return result;
 }
 
+// helper function to alphabetize the segment inputs, which are out of order
+string alphabetize(string s) {
+    vector<bool> segments(7, false);
+    for (int i=0; i<s.size(); i++) {
+        int c = (s[i] - char('a'));
+        segments[c] = true;
+    }
+    string ordered = "";
+    for (int i=0; i<7; i++) {
+        if (segments[i]) {
+            ordered += char(97+i); //97 is ascii for 'a'
+        }
+    }
+    return ordered;
+}
+
 int part1CountDigits (vector<Input> inputs) {
     int count = 0;
     for (auto in : inputs) {
@@ -75,6 +97,118 @@ int part1CountDigits (vector<Input> inputs) {
         }
     }
     return count;
+}
+
+// helper method - does d1 contain d2?
+bool digitContains(string d1, string d2) {
+    for (char c : d2) {
+        if (d1.find(c) == string::npos) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// helper method - subtract d2 from d1
+string subtractDigit(string d1, string d2) {
+    string temp = "";
+    for (char c : d1) {
+        // if the char from d1 isn't in d1 - add it to our buffer
+        if (d2.find(c) == string::npos) {
+            temp += c;
+        }
+    }
+    return temp;
+}
+
+int part2calculate(vector<Input> inputs) {
+    int sum = 0;
+    for (auto input : inputs) {
+        map<int, string> digitMap;
+
+        for (auto& digit : input.digits) {
+            digit = alphabetize(digit);
+        }
+
+        for (auto& out : input.outputs) {
+            out = alphabetize(out);
+        }
+
+        // we know 4 digits automatically - the ones with unique # of segments
+        // set up vectors for size 5 and 6, which are the remaining cahses
+        vector<string> digits5, digits6;
+        for (auto digit : input.digits) {
+            int dSize = digit.size();
+            switch (dSize) {
+                case 2:
+                    digitMap[1] = digit;
+                    break;
+                case 3:
+                    digitMap[7] = digit;
+                    break;
+                case 4:
+                    digitMap[4] = digit;
+                    break;
+                case 7:
+                    digitMap[8] = digit;
+                    break;
+                case 5:
+                    digits5.push_back(digit);
+                    break;
+                case 6:
+                    digits6.push_back(digit);
+                    break;
+            }
+        }
+
+        // solve for the digits with 5 segments.  we know:
+        //  if the digit contains the 1 digit segemnts -> 3
+        //  if the digit contains the 4 digit segments minus the 1 digit segments -> 5
+        //  the remaining digit is 2
+        string fourminusone = subtractDigit(digitMap[4], digitMap[1]);
+        for (auto digit: digits5) {
+            if (digitContains(digit, digitMap[1])) {
+                digitMap[3] = digit;
+            } else if (digitContains(digit, fourminusone)) {
+                digitMap[5] = digit;
+            } else {
+                digitMap[2] = digit;
+            }
+        }
+
+        // solve for the digits with 6 segments.  we know:
+        //  if the digit does not contain 1 -> 6
+        //  for the remaining digits, if it contains 3 -> 9
+        //  last digit -> 0
+        // first loop find the 6 digit
+        for (int i=0; i<digits6.size(); i++) {
+            if (!digitContains(digits6[i], digitMap[1])) {
+                digitMap[6] = digits6[i];
+                digits6.erase(digits6.begin() + i);
+                break;
+            }
+        }
+        for (auto digit : digits6) {
+            if (digitContains(digit, digitMap[3])) {
+                digitMap[9] = digit;
+            } else {
+                digitMap[0] = digit;
+            }
+        }
+
+        // now that we know the digits, we can figure out what the output actually is
+        string result = "";
+        for (auto out : input.outputs) {
+            // do a reverse lookup in the map
+            auto it = find_if(digitMap.begin(), digitMap.end(), [&out](const pair<int, string> &p) {
+                return p.second == out;
+            });
+            int value = it->first;
+            result += to_string(value);
+        }
+        sum += stoi(result);
+    }
+    return sum;
 }
 
 int main(int argc, char *argv[]) {
@@ -96,4 +230,6 @@ int main(int argc, char *argv[]) {
     }
     int part1answer = part1CountDigits(inputs);
     cout << "Part 1 count: " << part1answer << "\n";
+    int part2answer = part2calculate(inputs);
+    cout << "Part 2 sum: " << part2answer << "\n";
 }
